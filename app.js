@@ -67,11 +67,12 @@ async function enterApp(user){
     show('admin-view');
     show('member-view', false);
     await loadAdminData();
-  } else {
+    } else {
     show('admin-view', false);
     show('member-view');
     await loadCheckinEvent(eventId);
   }
+}
 
 async function loadCheckinEvent(eventId){
   if(!eventId){ $('checkin-title').textContent='Scan an event QR code · امسحي كود الفعالية'; $('checkin-description').textContent='Open the unique check-in link shared for your meeting or event. · افتحي رابط الحضور الخاص بالاجتماع أو الفعالية.'; show('checkin-btn',false); return; }
