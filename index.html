@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Phantoms | Attendance System</title>
+  <link rel="stylesheet" href="styles.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+</head>
+<body>
+  <main class="shell">
+    <header class="topbar">
+      <div class="brand-mark">P</div>
+      <div><div class="brand">PHANTOMS <span class="brand-accent">/ HR</span></div><div class="muted small">Attendance &amp; Team Operations · الحضور وإدارة الفريق</div></div>
+      <div class="top-actions"><span id="user-label" class="muted small"></span><button id="logout-btn" class="btn btn-ghost hidden">Log out</button></div>
+    </header>
+
+    <section id="setup-notice" class="notice hidden">
+      <strong>Setup needed · مطلوب الإعداد</strong><p>Add your Supabase project URL and anon key in <code>app.js</code>, then run <code>supabase.sql</code> in Supabase SQL Editor. · أضيفي بيانات Supabase وشغّلي ملف قاعدة البيانات.</p>
+    </section>
+
+    <section id="auth-view" class="auth-card">
+      <div class="eyebrow">PHANTOMS · TEAM OPERATIONS</div><h1>Attendance, made simple.</h1>
+      <p class="muted">Sign in with your team account to check in or manage attendance. · سجّلي الدخول لتسجيل الحضور أو إدارة التقارير.</p>
+      <form id="login-form" class="stack">
+        <label>Email · البريد الإلكتروني<input id="email" type="email" autocomplete="email" required placeholder="you@team.com"></label>
+        <label>Password · كلمة المرور<input id="password" type="password" autocomplete="current-password" required placeholder="Your password"></label>
+        <button class="btn btn-primary" type="submit">Sign in · دخول</button>
+        <p id="auth-message" class="message" aria-live="polite"></p>
+      </form>
+      <p class="muted small">New members should be added by an HR admin in Supabase Auth, then assigned a profile. · يضيف مسؤول HR الأعضاء ويجهّز حساباتهم.</p>
+    </section>
+
+    <section id="member-view" class="hidden">
+      <div class="page-heading"><div><div class="eyebrow">MEMBER SPACE · مساحة الأعضاء</div><h1>Check in · تسجيل الحضور</h1><p class="muted">Scan the event QR code, sign in, and confirm your attendance. · امسحي كود الفعالية وسجّلي حضورك.</p></div></div>
+      <article id="checkin-card" class="panel"><div class="icon-tile">✓</div><h2 id="checkin-title">Ready to check in?</h2><p id="checkin-description" class="muted">Open the unique event link from the QR code to record your attendance.</p><button id="checkin-btn" class="btn btn-primary hidden">Confirm attendance · تأكيد الحضور</button><p id="checkin-message" class="message" aria-live="polite"></p></article>
+    </section>
+
+    <section id="admin-view" class="hidden">
+      <div class="page-heading"><div><div class="eyebrow">HR CONTROL CENTER · لوحة الموارد البشرية</div><h1>Attendance overview</h1><p class="muted">Create events, generate QR codes, and review check-ins. · أنشئي الفعاليات وتابعي الحضور والغياب.</p></div><span class="pill">ADMIN</span></div>
+      <div class="stats-grid">
+        <article class="stat-card"><span class="muted">Members · الأعضاء</span><strong id="stat-members">—</strong><span class="stat-note">Active team profiles · الأعضاء النشطون</span></article>
+        <article class="stat-card"><span class="muted">Events · الفعاليات</span><strong id="stat-events">—</strong><span class="stat-note">Meetings and activities · اجتماعات وأنشطة</span></article>
+        <article class="stat-card"><span class="muted">Check-ins · تسجيلات الحضور</span><strong id="stat-checkins">—</strong><span class="stat-note">Recorded attendance · الحضور المسجل</span></article>
+        <article class="stat-card"><span class="muted">Attendance rate · نسبة الحضور</span><strong id="stat-rate">—</strong><span class="stat-note">Across completed events · الفعاليات المنتهية</span></article>
+      </div>
+      <div class="content-grid">
+        <article class="panel">
+          <div class="panel-heading"><div><div class="eyebrow">NEW SESSION · فعالية جديدة</div><h2>Create an event · إنشاء فعالية</h2></div></div>
+          <form id="event-form" class="stack">
+            <label>Event name · اسم الفعالية<input id="event-name" required maxlength="100" placeholder="Weekly team meeting" /></label>
+            <div class="two-col"><label>Type · النوع<select id="event-type"><option value="meeting">Meeting · اجتماع</option><option value="event">Event · فعالية</option></select></label><label>Late after (minutes) · حد التأخير بالدقائق<input id="late-after" type="number" min="0" max="180" value="10" required /></label></div>
+            <div class="two-col"><label>Opens at · يبدأ في<input id="event-start" type="datetime-local" required /></label><label>Closes at · ينتهي في<input id="event-end" type="datetime-local" required /></label></div>
+            <button class="btn btn-primary" type="submit">Create event + QR · إنشاء وكود QR</button><p id="event-message" class="message" aria-live="polite"></p>
+          </form>
+        </article>
+        <article class="panel qr-panel"><div class="eyebrow">EVENT QR · كود الفعالية</div><h2 id="qr-title">Your QR appears here</h2><p id="qr-description" class="muted small">Create an event to generate its check-in QR code. · أنشئي فعالية لتوليد الكود.</p><div id="qr-code" class="qr-box"><span class="muted small">No QR yet</span></div><button id="copy-link-btn" class="btn btn-secondary hidden">Copy check-in link · نسخ الرابط</button><a id="open-link" class="text-link hidden" target="_blank" rel="noreferrer">Open member check-in page · فتح صفحة الحضور ↗</a></article>
+      </div>
+      <article class="panel table-panel"><div class="panel-heading"><div><div class="eyebrow">SESSION HISTORY · سجل الفعاليات</div><h2>Events &amp; attendance · الفعاليات والحضور</h2></div><button id="refresh-btn" class="btn btn-secondary">Refresh · تحديث</button></div><div class="table-wrap"><table><thead><tr><th>Event · الفعالية</th><th>Type · النوع</th><th>Window · الوقت</th><th>Check-ins · الحضور</th><th>Status · الحالة</th></tr></thead><tbody id="events-table"><tr><td colspan="5" class="muted">Loading events…</td></tr></tbody></table></div></article>
+      <article class="panel table-panel"><div class="panel-heading"><div><div class="eyebrow">RECENT ACTIVITY · أحدث النشاط</div><h2>Latest check-ins · أحدث تسجيلات الحضور</h2></div></div><div class="table-wrap"><table><thead><tr><th>Member · العضو</th><th>Event · الفعالية</th><th>Checked in · وقت التسجيل</th><th>Status · الحالة</th></tr></thead><tbody id="attendance-table"><tr><td colspan="4" class="muted">Loading attendance…</td></tr></tbody></table></div></article>
+      <article class="panel table-panel report-panel">
+        <div class="panel-heading"><div><div class="eyebrow">MEMBER PERFORMANCE · أداء الأعضاء</div><h2>Attendance reports · تقارير الحضور</h2></div><button id="export-report-btn" class="btn btn-secondary">Export CSV · تصدير</button></div>
+        <p class="muted small report-note">Absences are calculated from completed events only. · يُحسب الغياب من الفعاليات التي انتهت فقط.</p>
+        <div class="report-filters">
+          <label>Search member · بحث عن عضو<input id="report-search" type="search" placeholder="Name or committee · الاسم أو اللجنة" /></label>
+          <label>Event type · نوع الفعالية<select id="report-type"><option value="all">All types · الكل</option><option value="meeting">Meetings · اجتماعات</option><option value="event">Events · فعاليات</option></select></label>
+        </div>
+        <div class="table-wrap"><table><thead><tr><th>Member · العضو</th><th>Committee · اللجنة</th><th>Completed · المنتهي</th><th>Attended · حضر</th><th>Absent · غياب</th><th>Late · تأخير</th><th>Attendance · الالتزام</th></tr></thead><tbody id="report-table"><tr><td colspan="7" class="muted">Loading reports… · جارٍ تحميل التقارير</td></tr></tbody></table></div>
+      </article>
+    </section>
+    <footer class="footer">PHANTOMS <span>·</span> Attendance &amp; Team Operations · إدارة الحضور والفريق</footer>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>
