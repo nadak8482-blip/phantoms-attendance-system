@@ -32,7 +32,48 @@ function showLoggedOut(){ currentUser=null; currentProfile=null; show('auth-view
 async function login(e){ e.preventDefault(); message('auth-message','Signing in… · جارٍ تسجيل الدخول'); const {error}=await db.auth.signInWithPassword({email:$('email').value.trim(),password:$('password').value}); if(error) message('auth-message',error.message,'error'); }
 async function logout(){ await db.auth.signOut(); }
 async function enterApp(user){
-  currentUser=user; const {data:profile,error}=await db.from('profiles').select('id,full_name,team,role,active,created_at').eq('id',user.id).maybeSingle();
+  currentUser = user;
+
+  const { data: profile, error } = await db
+    .from('profiles')
+    .select('id,full_name,team,role,active,created_at')
+    .eq('id', user.id)
+    .maybeSingle();
+
+  if (error) {
+    console.error('PROFILE READ ERROR:', error);
+    message('auth-message', 'Profile read error: ' + error.message, 'error');
+    return;
+  }
+
+  if (!profile) {
+    message('auth-message', 'No profile found for this user ID.', 'error');
+    return;
+  }
+
+  if (profile.active !== true) {
+    message('auth-message', 'Profile active value: ' + String(profile.active), 'error');
+    return;
+  }
+
+  currentProfile = profile;
+  show('auth-view', false);
+  show('logout-btn');
+  $('user-label').textContent = profile.full_name || user.email;
+
+  const eventId = new URLSearchParams(location.search).get('event');
+
+  if (profile.role === 'admin') {
+    show('admin-view');
+    show('member-view', false);
+    await loadAdminData();
+  } else {
+    show('admin-view', false);
+    show('member-view');
+    await loadCheckinEvent(eventId);
+  }
+}
+
   if(error || !profile || !profile.active){ message('auth-message','Your profile is not active yet. Ask HR to add/activate your profile. · الحساب غير مفعّل، تواصلي مع HR.','error'); await db.auth.signOut(); return; }
   currentProfile=profile; show('auth-view',false); show('logout-btn'); $('user-label').textContent=profile.full_name||user.email;
   const eventId=new URLSearchParams(location.search).get('event');
