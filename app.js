@@ -1,7 +1,7 @@
 // Phantoms Attendance System — Supabase browser client.
 // Never put a service_role key in frontend code.
-const SUPABASE_URL = 'PASTE_SUPABASE_PROJECT_URL_HERE';
-const SUPABASE_ANON_KEY = 'PASTE_SUPABASE_ANON_KEY_HERE';
+const SUPABASE_URL = 'https://okswrkqpmxcvfdatjlqb.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_aQVQLirzgRp6-B8boJQUMA_7EJisUk8';
 const configured = SUPABASE_URL.startsWith('https://') && !SUPABASE_URL.includes('PASTE_') && !SUPABASE_ANON_KEY.includes('PASTE_');
 const db = configured ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
 const $ = (id) => document.getElementById(id);
