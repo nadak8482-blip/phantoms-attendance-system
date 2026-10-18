@@ -72,14 +72,7 @@ async function enterApp(user){
     show('member-view');
     await loadCheckinEvent(eventId);
   }
-}
 
-  if(error || !profile || !profile.active){ message('auth-message','Your profile is not active yet. Ask HR to add/activate your profile. · الحساب غير مفعّل، تواصلي مع HR.','error'); await db.auth.signOut(); return; }
-  currentProfile=profile; show('auth-view',false); show('logout-btn'); $('user-label').textContent=profile.full_name||user.email;
-  const eventId=new URLSearchParams(location.search).get('event');
-  if(profile.role==='admin'){ show('admin-view'); show('member-view',false); await loadAdminData(); }
-  else { show('admin-view',false); show('member-view'); await loadCheckinEvent(eventId); }
-}
 async function loadCheckinEvent(eventId){
   if(!eventId){ $('checkin-title').textContent='Scan an event QR code · امسحي كود الفعالية'; $('checkin-description').textContent='Open the unique check-in link shared for your meeting or event. · افتحي رابط الحضور الخاص بالاجتماع أو الفعالية.'; show('checkin-btn',false); return; }
   const {data:event,error}=await db.from('events').select('id,title,event_type,starts_at,ends_at,late_after_minutes').eq('id',eventId).maybeSingle();
